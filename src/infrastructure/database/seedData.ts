@@ -2,6 +2,7 @@ import { Restaurant, Sector, Table } from "../../domain/entities";
 import { InMemoryRestaurantRepository } from "../repositories/InMemoryRestaurantRepository";
 import { InMemorySectorRepository } from "../repositories/InMemorySectorRepository";
 import { InMemoryTableRepository } from "../repositories/InMemoryTableRepository";
+import { logger } from "../logging/logger";
 
 export async function seedData(
   restaurantRepo: InMemoryRestaurantRepository,
@@ -138,10 +139,11 @@ export async function seedData(
     await tableRepo.save(table);
   }
 
-  console.log("✅ Seed data created successfully");
-  console.log(`   Restaurant: ${restaurant.name} (${restaurant.id})`);
-  console.log(
-    `   Sectors: ${mainHall.name} (${mainHall.id}), ${terrace.name} (${terrace.id})`
+  logger.info("✅ Seed data created successfully");
+  logger.info(
+    { restaurant: restaurant.name, restaurantId: restaurant.id },
+    "Restaurant seeded"
   );
-  console.log(`   Tables: ${tables.length} tables created`);
+  logger.info({ sectors: [mainHall.name, terrace.name] }, "Sectors seeded");
+  logger.info({ tableCount: tables.length }, "Tables seeded");
 }

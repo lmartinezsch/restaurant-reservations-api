@@ -30,3 +30,9 @@ export class ValidationError extends DomainError {
     super(message);
   }
 }
+
+export class RateLimitError extends DomainError {
+  constructor(message: string = "Too many requests") {
+    super(message);
+  }
+}

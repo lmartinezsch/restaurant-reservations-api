@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { CheckAvailabilityUseCase } from "../../application/usecases/CheckAvailabilityUseCase";
 import { ValidationError } from "../../domain/errors";
+import { CheckAvailabilityQuerySchema } from "./schemas";
+import { logger } from "../logging/logger";
 
 export class AvailabilityController {
   constructor(private checkAvailabilityUseCase: CheckAvailabilityUseCase) {}
@@ -11,25 +13,37 @@ export class AvailabilityController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const { restaurantId, sectorId, date, partySize } = req.query;
+      const requestId = (req as any).requestId;
 
-      if (!restaurantId || !sectorId || !date || !partySize) {
-        throw new ValidationError(
-          "Missing required query parameters: restaurantId, sectorId, date, partySize"
-        );
+      const validationResult = CheckAvailabilityQuerySchema.safeParse(
+        req.query
+      );
+
+      if (!validationResult.success) {
+        const errors = validationResult.error.issues
+          .map((e) => `${e.path.join(".")}: ${e.message}`)
+          .join(", ");
+        throw new ValidationError(errors);
       }
 
-      const partySizeNum = parseInt(partySize as string, 10);
-      if (isNaN(partySizeNum) || partySizeNum < 1) {
-        throw new ValidationError("partySize must be a positive integer");
-      }
+      const { restaurantId, sectorId, date, partySize } = validationResult.data;
+
+      logger.info(
+        { requestId, restaurantId, sectorId, date, partySize },
+        "Checking availability"
+      );
 
       const result = await this.checkAvailabilityUseCase.execute({
-        restaurantId: restaurantId as string,
-        sectorId: sectorId as string,
-        date: date as string,
-        partySize: partySizeNum,
+        restaurantId,
+        sectorId,
+        date,
+        partySize,
       });
+
+      logger.info(
+        { requestId, slotsFound: result.slots.length },
+        "Availability check completed"
+      );
 
       res.status(200).json(result);
     } catch (error) {

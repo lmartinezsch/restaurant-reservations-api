@@ -15,6 +15,7 @@ import { CancelReservationUseCase } from "./application/usecases/CancelReservati
 import { ListReservationsUseCase } from "./application/usecases/ListReservationsUseCase";
 
 import { seedData } from "./infrastructure/database/seedData";
+import { logger } from "./infrastructure/logging/logger";
 
 const PORT = process.env.PORT || 3000;
 
@@ -66,17 +67,17 @@ async function bootstrap(): Promise<void> {
   const app = createApp(availabilityController, reservationController);
 
   app.listen(PORT, () => {
-    console.log(`🚀 API server running on port ${PORT}`);
-    console.log(`📍 Endpoints:`);
-    console.log(`   GET  /availability`);
-    console.log(`   POST /reservations`);
-    console.log(`   DELETE /reservations/:id`);
-    console.log(`   GET  /reservations/day`);
+    logger.info({ port: PORT }, "🚀 API server running");
+    logger.info("📍 Available endpoints:");
+    logger.info("   GET  /availability");
+    logger.info("   POST /reservations");
+    logger.info("   DELETE /reservations/:id");
+    logger.info("   GET  /reservations/day");
   });
 }
 
 // Start the server
 bootstrap().catch((error) => {
-  console.error("❌ Failed to start server:", error);
+  logger.error({ err: error }, "❌ Failed to start server");
   process.exit(1);
 });

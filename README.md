@@ -20,8 +20,8 @@ Restaurant Reservation API is a scheduling kernel that handles table reservation
 ```
 src/
 ├── domain/                    # Business entities and rules (core)
-│   ├── entities.ts           # Restaurant, Sector, Table, Reservation, Customer
-│   ├── errors.ts             # Domain-specific errors
+│   ├── entities.ts           # Restaurant, Sector, Table, Reservation, Customer, ReservationStatus enum
+│   ├── errors.ts             # Domain-specific errors (ValidationError, NotFoundError, etc.)
 │   └── ports/
 │       └── repositories.ts   # Repository interfaces (ports)
 │
@@ -38,8 +38,12 @@ src/
     ├── http/                  # REST API controllers
     │   ├── AvailabilityController.ts
     │   ├── ReservationController.ts
-    │   ├── errorHandler.ts
-    │   └── app.ts
+    │   ├── schemas.ts         # Zod validation schemas
+    │   ├── requestIdMiddleware.ts
+    │   ├── errorHandler.ts    # Maps errors to HTTP status codes
+    │   └── app.ts             # Express app setup with Pino logging
+    ├── logging/
+    │   └── logger.ts          # Pino logger configuration
     ├── repositories/          # In-memory implementations
     │   ├── InMemoryRestaurantRepository.ts
     │   ├── InMemorySectorRepository.ts
