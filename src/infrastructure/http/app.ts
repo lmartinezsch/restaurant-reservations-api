@@ -1,4 +1,5 @@
 import express, { Express, Router } from "express";
+import cors from "cors";
 import pinoHttp from "pino-http";
 import { AvailabilityController } from "./AvailabilityController";
 import { ReservationController } from "./ReservationController";
@@ -11,6 +12,40 @@ export function createApp(
   reservationController: ReservationController
 ): Express {
   const app = express();
+
+  // CORS configuration
+  const allowedOrigins = [
+    "http://localhost:3000", // Local development frontend
+    "https://restaurant-reservations-front.vercel.app", // Production frontend (when deployed)
+    /vercel\.app$/, // Any Vercel preview deployments
+  ];
+
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl, Postman)
+        if (!origin) return callback(null, true);
+
+        // Check if origin is allowed
+        const isAllowed = allowedOrigins.some((allowedOrigin) => {
+          if (typeof allowedOrigin === "string") {
+            return origin === allowedOrigin;
+          }
+          // For regex patterns
+          return allowedOrigin.test(origin);
+        });
+
+        if (isAllowed) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
+      },
+      credentials: true,
+      methods: ["GET", "POST", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Idempotency-Key"],
+    })
+  );
 
   app.use(requestIdMiddleware);
 
