@@ -44,7 +44,14 @@ src/
     │   └── app.ts             # Express app setup with Pino logging
     ├── logging/
     │   └── logger.ts          # Pino logger configuration
-    ├── repositories/          # In-memory implementations
+    ├── repositories/          # Prisma + PostgreSQL implementations
+    │   ├── PrismaRestaurantRepository.ts
+    │   ├── PrismaSectorRepository.ts
+    │   ├── PrismaTableRepository.ts
+    │   ├── PrismaReservationRepository.ts
+    │   ├── PrismaIdempotencyKeyRepository.ts
+    │   ├── PrismaLockRepository.ts
+    │   # Also includes InMemory implementations for testing
     │   ├── InMemoryRestaurantRepository.ts
     │   ├── InMemorySectorRepository.ts
     │   ├── InMemoryTableRepository.ts
@@ -142,6 +149,14 @@ User B waits/fails → gets 409 or retries after lock release
 # Install dependencies
 npm install
 
+# Set up database (see DATABASE_SETUP.md for details)
+# 1. Configure your DATABASE_URL in .env
+# 2. Generate Prisma Client
+npx prisma generate
+
+# 3. Run migrations
+npx prisma migrate dev --name init
+
 # Run in development mode
 npm run dev
 
@@ -151,6 +166,35 @@ npm start
 ```
 
 The API will start on `http://localhost:3000`
+
+### Database Configuration
+
+This application uses **PostgreSQL with Prisma ORM** for persistence.
+
+Quick setup:
+
+1. **Configure `.env`** with your database URL:
+
+   ```bash
+   DATABASE_URL="postgresql://user:password@host:5432/dbname"
+   ```
+
+2. **Run migrations**:
+
+   ```bash
+   npx prisma generate
+   npx prisma migrate dev --name init
+   ```
+
+3. **Database is automatically seeded** on first run with test data
+
+📖 **See [DATABASE_SETUP.md](./DATABASE_SETUP.md) for complete instructions**, including:
+
+- Schema details (7 models with proper indexes and cascades)
+- Vercel Postgres configuration
+- Prisma commands reference
+- Architecture notes
+- Troubleshooting
 
 ### Running Tests
 
@@ -172,10 +216,11 @@ npm test -- --coverage
 - ✅ **Integration tests** (Full API endpoints with real HTTP requests)
 - ✅ **Boundary cases** (adjacent reservations, end-exclusive intervals)
 - ✅ **Error scenarios** (validation, not found, no capacity, concurrency)
+- ✅ **Uses InMemory repositories** for fast, isolated tests
 
 ### Test Data
 
-The server automatically seeds one restaurant on startup:
+The database is automatically seeded with one restaurant on first run:
 
 - **Restaurant**: `Test Restaurant` (ID: `R1`)
 

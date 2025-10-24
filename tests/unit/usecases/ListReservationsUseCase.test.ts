@@ -76,6 +76,7 @@ describe("ListReservationsUseCase", () => {
     restaurantRepo = {
       findById: jest.fn(),
       findAll: jest.fn(),
+      save: jest.fn(),
     } as jest.Mocked<RestaurantRepository>;
 
     useCase = new ListReservationsUseCase(reservationRepo, restaurantRepo);

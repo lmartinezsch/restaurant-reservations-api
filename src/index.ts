@@ -1,13 +1,14 @@
+import { PrismaClient } from "@prisma/client";
 import { createApp } from "./infrastructure/http/app";
 import { AvailabilityController } from "./infrastructure/http/AvailabilityController";
 import { ReservationController } from "./infrastructure/http/ReservationController";
 
-import { InMemoryRestaurantRepository } from "./infrastructure/repositories/InMemoryRestaurantRepository";
-import { InMemorySectorRepository } from "./infrastructure/repositories/InMemorySectorRepository";
-import { InMemoryTableRepository } from "./infrastructure/repositories/InMemoryTableRepository";
-import { InMemoryReservationRepository } from "./infrastructure/repositories/InMemoryReservationRepository";
-import { InMemoryIdempotencyKeyRepository } from "./infrastructure/repositories/InMemoryIdempotencyKeyRepository";
-import { InMemoryLockRepository } from "./infrastructure/repositories/InMemoryLockRepository";
+import { PrismaRestaurantRepository } from "./infrastructure/repositories/PrismaRestaurantRepository";
+import { PrismaSectorRepository } from "./infrastructure/repositories/PrismaSectorRepository";
+import { PrismaTableRepository } from "./infrastructure/repositories/PrismaTableRepository";
+import { PrismaReservationRepository } from "./infrastructure/repositories/PrismaReservationRepository";
+import { PrismaIdempotencyKeyRepository } from "./infrastructure/repositories/PrismaIdempotencyKeyRepository";
+import { PrismaLockRepository } from "./infrastructure/repositories/PrismaLockRepository";
 
 import { CheckAvailabilityUseCase } from "./application/usecases/CheckAvailabilityUseCase";
 import { CreateReservationUseCase } from "./application/usecases/CreateReservationUseCase";
@@ -22,20 +23,40 @@ const PORT = process.env.PORT || 3000;
 
 // Singleton instances for serverless environments (Vercel)
 let appInstance: Express | null = null;
+let prismaInstance: PrismaClient | null = null;
+
+function getPrismaClient(): PrismaClient {
+  if (!prismaInstance) {
+    prismaInstance = new PrismaClient({
+      log:
+        process.env.NODE_ENV === "development"
+          ? ["query", "error", "warn"]
+          : ["error"],
+    });
+  }
+  return prismaInstance;
+}
 
 async function initializeApp(): Promise<Express> {
   if (appInstance) {
     return appInstance;
   }
 
-  const restaurantRepo = new InMemoryRestaurantRepository();
-  const sectorRepo = new InMemorySectorRepository();
-  const tableRepo = new InMemoryTableRepository();
-  const reservationRepo = new InMemoryReservationRepository();
-  const idempotencyRepo = new InMemoryIdempotencyKeyRepository();
-  const lockRepo = new InMemoryLockRepository();
+  const prisma = getPrismaClient();
 
-  await seedData(restaurantRepo, sectorRepo, tableRepo);
+  const restaurantRepo = new PrismaRestaurantRepository(prisma);
+  const sectorRepo = new PrismaSectorRepository(prisma);
+  const tableRepo = new PrismaTableRepository(prisma);
+  const reservationRepo = new PrismaReservationRepository(prisma);
+  const idempotencyRepo = new PrismaIdempotencyKeyRepository(prisma);
+  const lockRepo = new PrismaLockRepository(prisma);
+
+  // Seed data if database is empty
+  const existingRestaurants = await restaurantRepo.findAll();
+  if (existingRestaurants.length === 0) {
+    logger.info("Seeding database with initial data...");
+    await seedData(restaurantRepo, sectorRepo, tableRepo);
+  }
 
   const checkAvailabilityUseCase = new CheckAvailabilityUseCase(
     restaurantRepo,

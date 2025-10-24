@@ -1,11 +1,61 @@
 # Vercel Deployment Guide
 
-This API can be deployed to Vercel as a serverless function.
+This API can be deployed to Vercel as a serverless function with **PostgreSQL database persistence**.
 
 ## 📦 Prerequisites
 
 - A [Vercel account](https://vercel.com)
 - [Vercel CLI](https://vercel.com/cli) (optional)
+- **Vercel Postgres database** (or any PostgreSQL provider)
+
+## 🗄️ Database Setup (Required)
+
+### Step 1: Create Vercel Postgres Database
+
+1. Go to your [Vercel Dashboard](https://vercel.com/dashboard)
+2. Click "Storage" → "Create Database"
+3. Select "Postgres"
+4. Choose a name and region
+5. Copy the connection string (will be used in environment variables)
+
+Alternatively, use any PostgreSQL provider:
+
+- Supabase
+- PlanetScale (MySQL, requires schema changes)
+- Railway
+- Neon
+
+### Step 2: Configure Environment Variables
+
+In your Vercel project settings, add the following environment variable:
+
+```
+DATABASE_URL=postgres://username:password@host.postgres.vercel-storage.com:5432/verceldb
+```
+
+⚠️ **Important**: Add this to **all environments** (Production, Preview, Development)
+
+### Step 3: Run Migrations
+
+After deploying, migrations will run automatically via the `postinstall` script in `package.json`:
+
+```json
+"postinstall": "prisma generate"
+```
+
+For the first deployment, you may need to manually run migrations:
+
+```bash
+# From your local machine with DATABASE_URL set
+npx prisma migrate deploy
+```
+
+Or use Vercel CLI:
+
+```bash
+vercel env pull .env.local
+npx prisma migrate deploy
+```
 
 ## 🚀 Deployment Options
 
@@ -56,40 +106,33 @@ The project includes a `vercel.json` file with the following configuration:
 ## 🔧 How It Works
 
 - **Serverless Mode**: In Vercel, the Express app runs as a serverless function
-- **Cold Starts**: First request may be slower (cold start), subsequent requests are faster
-- **In-Memory Storage**: Data persists only during the function's lifetime (ephemeral)
-- **State Management**: Each serverless invocation may get a fresh instance
+- **Database**: PostgreSQL with Prisma ORM provides persistent storage
+- **Auto-Seeding**: Database is automatically seeded on first run if empty
+- **Connection Pooling**: Prisma manages connections efficiently for serverless
+- **Cold Starts**: First request may be slower, subsequent requests are faster
+- **State Management**: PrismaClient is instantiated as a singleton to reuse connections
+
+## ✅ Production Ready
+
+With Prisma PostgreSQL implementation, the API now has:
+
+1. ✅ **Persistent Storage**: Data survives across deployments and cold starts
+2. ✅ **Distributed Locks**: PostgreSQL row-level locks ensure concurrency safety across function instances
+3. ✅ **Idempotency**: Keys stored in database with unique constraints
+4. ✅ **ACID Transactions**: Database guarantees data consistency
+5. ✅ **Automatic Timestamps**: `createdAt`/`updatedAt` managed at DB level
 
 ## ⚠️ Important Notes
 
-### Limitations in Serverless Environment
+### Environment Variables Required
 
-1. **Data Persistence**: In-memory repositories will reset between cold starts
-2. **Locks**: Concurrency locks work within a single function instance only
-3. **Idempotency Keys**: May not persist across different function instances
+Set these in Vercel Dashboard → Your Project → Settings → Environment Variables:
 
-### Production Recommendations
-
-For a production deployment on Vercel, consider:
-
-1. **Database**: Replace in-memory repositories with a real database:
-
-   - [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres)
-   - [Supabase](https://supabase.com/)
-   - [PlanetScale](https://planetscale.com/)
-   - [MongoDB Atlas](https://www.mongodb.com/atlas)
-
-2. **Distributed Locks**: Use Redis for distributed locking:
-
-   - [Upstash Redis](https://upstash.com/) (Vercel-friendly)
-   - [Redis Cloud](https://redis.com/cloud/)
-
-3. **Idempotency**: Store keys in Redis with TTL
-
-4. **Environment Variables**: Set in Vercel Dashboard:
-   - `NODE_ENV=production`
-   - `LOG_LEVEL=info`
-   - Database connection strings
+```bash
+DATABASE_URL=postgres://...  # Your Postgres connection string
+NODE_ENV=production          # Optional, recommended
+LOG_LEVEL=info              # Optional, for Pino logging
+```
 
 ## 🧪 Testing Deployed API
 

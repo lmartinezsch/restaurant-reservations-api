@@ -3,16 +3,19 @@ import { Restaurant, Sector, Table, Reservation } from "../entities";
 export interface RestaurantRepository {
   findById(id: string): Promise<Restaurant | null>;
   findAll(): Promise<Restaurant[]>;
+  save(restaurant: Restaurant): Promise<Restaurant>;
 }
 
 export interface SectorRepository {
   findById(id: string): Promise<Sector | null>;
   findByRestaurantId(restaurantId: string): Promise<Sector[]>;
+  save(sector: Sector): Promise<Sector>;
 }
 
 export interface TableRepository {
   findById(id: string): Promise<Table | null>;
   findBySectorId(sectorId: string): Promise<Table[]>;
+  save(table: Table): Promise<Table>;
 }
 
 export interface ReservationRepository {

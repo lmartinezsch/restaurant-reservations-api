@@ -1,0 +1,122 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Restaurant {
+  id        String   @id @default(uuid())
+  name      String
+  timezone  String
+  shifts    Json?    // Array of {start: string, end: string}
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  sectors      Sector[]
+  reservations Reservation[]
+
+  @@map("restaurants")
+}
+
+model Sector {
+  id           String   @id @default(uuid())
+  restaurantId String
+  name         String
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  tables       Table[]
+  reservations Reservation[]
+
+  @@index([restaurantId])
+  @@map("sectors")
+}
+
+model Table {
+  id        String   @id @default(uuid())
+  sectorId  String
+  name      String
+  minSize   Int
+  maxSize   Int
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  sector       Sector            @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+  reservations ReservationTable[]
+
+  @@index([sectorId])
+  @@map("tables")
+}
+
+model Reservation {
+  id               String   @id @default(uuid())
+  restaurantId     String
+  sectorId         String
+  partySize        Int
+  startDateTimeISO String   // ISO 8601 datetime string
+  endDateTimeISO   String   // ISO 8601 datetime string
+  status           String   // CONFIRMED, PENDING, CANCELLED
+  notes            String?
+  createdAt        DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime @updatedAt @db.Timestamptz(3)
+
+  // Customer embedded data (denormalized for simplicity)
+  customerName      String
+  customerPhone     String
+  customerEmail     String
+  customerCreatedAt String // ISO 8601 datetime string
+  customerUpdatedAt String // ISO 8601 datetime string
+
+  restaurant Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  sector     Sector             @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+  tables     ReservationTable[]
+
+  @@index([restaurantId])
+  @@index([sectorId])
+  @@index([startDateTimeISO])
+  @@index([status])
+  @@map("reservations")
+}
+
+// Junction table for many-to-many relationship between Reservation and Table
+model ReservationTable {
+  id            String @id @default(uuid())
+  reservationId String
+  tableId       String
+
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  table       Table       @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  @@unique([reservationId, tableId])
+  @@index([reservationId])
+  @@index([tableId])
+  @@map("reservation_tables")
+}
+
+model IdempotencyKey {
+  id            String   @id @default(uuid())
+  key           String   @unique
+  reservationId String
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([key])
+  @@map("idempotency_keys")
+}
+
+model Lock {
+  id        String   @id @default(uuid())
+  lockKey   String   @unique
+  acquiredAt DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+
+  @@index([lockKey])
+  @@index([expiresAt])
+  @@map("locks")
+}

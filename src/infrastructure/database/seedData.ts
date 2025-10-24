@@ -1,18 +1,21 @@
+import { v4 as uuidv4 } from "uuid";
 import { Restaurant, Sector, Table } from "../../domain/entities";
-import { InMemoryRestaurantRepository } from "../repositories/InMemoryRestaurantRepository";
-import { InMemorySectorRepository } from "../repositories/InMemorySectorRepository";
-import { InMemoryTableRepository } from "../repositories/InMemoryTableRepository";
+import {
+  RestaurantRepository,
+  SectorRepository,
+  TableRepository,
+} from "../../domain/ports/repositories";
 import { logger } from "../logging/logger";
 
 export async function seedData(
-  restaurantRepo: InMemoryRestaurantRepository,
-  sectorRepo: InMemorySectorRepository,
-  tableRepo: InMemoryTableRepository
+  restaurantRepo: RestaurantRepository,
+  sectorRepo: SectorRepository,
+  tableRepo: TableRepository
 ): Promise<void> {
   const now = new Date().toISOString();
 
   const restaurant: Restaurant = {
-    id: "R1",
+    id: uuidv4(),
     name: "Restaurant Reservations Test Restaurant",
     timezone: "America/Argentina/Buenos_Aires",
     shifts: [
@@ -22,30 +25,30 @@ export async function seedData(
     createdAt: now,
     updatedAt: now,
   };
-  await restaurantRepo.save(restaurant);
+  const savedRestaurant = await restaurantRepo.save(restaurant);
 
   const mainHall: Sector = {
-    id: "S1",
-    restaurantId: "R1",
+    id: uuidv4(),
+    restaurantId: savedRestaurant.id,
     name: "Main Hall",
     createdAt: now,
     updatedAt: now,
   };
-  await sectorRepo.save(mainHall);
+  const savedMainHall = await sectorRepo.save(mainHall);
 
   const terrace: Sector = {
-    id: "S2",
-    restaurantId: "R1",
+    id: uuidv4(),
+    restaurantId: savedRestaurant.id,
     name: "Terrace",
     createdAt: now,
     updatedAt: now,
   };
-  await sectorRepo.save(terrace);
+  const savedTerrace = await sectorRepo.save(terrace);
 
   const tables: Table[] = [
     {
-      id: "T1",
-      sectorId: "S1",
+      id: uuidv4(),
+      sectorId: savedMainHall.id,
       name: "Table 1",
       minSize: 1,
       maxSize: 2,
@@ -53,8 +56,8 @@ export async function seedData(
       updatedAt: now,
     },
     {
-      id: "T2",
-      sectorId: "S1",
+      id: uuidv4(),
+      sectorId: savedMainHall.id,
       name: "Table 2",
       minSize: 1,
       maxSize: 2,
@@ -62,8 +65,8 @@ export async function seedData(
       updatedAt: now,
     },
     {
-      id: "T3",
-      sectorId: "S1",
+      id: uuidv4(),
+      sectorId: savedMainHall.id,
       name: "Table 3",
       minSize: 3,
       maxSize: 4,
@@ -71,8 +74,8 @@ export async function seedData(
       updatedAt: now,
     },
     {
-      id: "T4",
-      sectorId: "S1",
+      id: uuidv4(),
+      sectorId: savedMainHall.id,
       name: "Table 4",
       minSize: 3,
       maxSize: 4,
@@ -80,8 +83,8 @@ export async function seedData(
       updatedAt: now,
     },
     {
-      id: "T5",
-      sectorId: "S1",
+      id: uuidv4(),
+      sectorId: savedMainHall.id,
       name: "Table 5",
       minSize: 3,
       maxSize: 4,
@@ -89,8 +92,8 @@ export async function seedData(
       updatedAt: now,
     },
     {
-      id: "T6",
-      sectorId: "S1",
+      id: uuidv4(),
+      sectorId: savedMainHall.id,
       name: "Table 6",
       minSize: 5,
       maxSize: 8,
@@ -98,8 +101,8 @@ export async function seedData(
       updatedAt: now,
     },
     {
-      id: "T7",
-      sectorId: "S2",
+      id: uuidv4(),
+      sectorId: savedTerrace.id,
       name: "Terrace 1",
       minSize: 1,
       maxSize: 2,
@@ -107,8 +110,8 @@ export async function seedData(
       updatedAt: now,
     },
     {
-      id: "T8",
-      sectorId: "S2",
+      id: uuidv4(),
+      sectorId: savedTerrace.id,
       name: "Terrace 2",
       minSize: 1,
       maxSize: 2,
@@ -116,8 +119,8 @@ export async function seedData(
       updatedAt: now,
     },
     {
-      id: "T9",
-      sectorId: "S2",
+      id: uuidv4(),
+      sectorId: savedTerrace.id,
       name: "Terrace 3",
       minSize: 3,
       maxSize: 4,
@@ -125,8 +128,8 @@ export async function seedData(
       updatedAt: now,
     },
     {
-      id: "T10",
-      sectorId: "S2",
+      id: uuidv4(),
+      sectorId: savedTerrace.id,
       name: "Terrace 4",
       minSize: 3,
       maxSize: 4,
@@ -141,9 +144,12 @@ export async function seedData(
 
   logger.info("✅ Seed data created successfully");
   logger.info(
-    { restaurant: restaurant.name, restaurantId: restaurant.id },
+    { restaurant: savedRestaurant.name, restaurantId: savedRestaurant.id },
     "Restaurant seeded"
   );
-  logger.info({ sectors: [mainHall.name, terrace.name] }, "Sectors seeded");
+  logger.info(
+    { sectors: [savedMainHall.name, savedTerrace.name] },
+    "Sectors seeded"
+  );
   logger.info({ tableCount: tables.length }, "Tables seeded");
 }

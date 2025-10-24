@@ -61,16 +61,19 @@ describe("CreateReservationUseCase", () => {
     restaurantRepo = {
       findById: jest.fn(),
       findAll: jest.fn(),
+      save: jest.fn(),
     } as jest.Mocked<RestaurantRepository>;
 
     sectorRepo = {
       findById: jest.fn(),
       findByRestaurantId: jest.fn(),
+      save: jest.fn(),
     } as jest.Mocked<SectorRepository>;
 
     tableRepo = {
       findById: jest.fn(),
       findBySectorId: jest.fn(),
+      save: jest.fn(),
     } as jest.Mocked<TableRepository>;
 
     reservationRepo = {
