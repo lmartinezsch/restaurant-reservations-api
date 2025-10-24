@@ -16,10 +16,18 @@ import { ListReservationsUseCase } from "./application/usecases/ListReservations
 
 import { seedData } from "./infrastructure/database/seedData";
 import { logger } from "./infrastructure/logging/logger";
+import { Express } from "express";
 
 const PORT = process.env.PORT || 3000;
 
-async function bootstrap(): Promise<void> {
+// Singleton instances for serverless environments (Vercel)
+let appInstance: Express | null = null;
+
+async function initializeApp(): Promise<Express> {
+  if (appInstance) {
+    return appInstance;
+  }
+
   const restaurantRepo = new InMemoryRestaurantRepository();
   const sectorRepo = new InMemorySectorRepository();
   const tableRepo = new InMemoryTableRepository();
@@ -64,20 +72,32 @@ async function bootstrap(): Promise<void> {
     listReservationsUseCase
   );
 
-  const app = createApp(availabilityController, reservationController);
+  appInstance = createApp(availabilityController, reservationController);
 
-  app.listen(PORT, () => {
-    logger.info({ port: PORT }, "🚀 API server running");
-    logger.info("📍 Available endpoints:");
-    logger.info("   GET  /availability");
-    logger.info("   POST /reservations");
-    logger.info("   DELETE /reservations/:id");
-    logger.info("   GET  /reservations/day");
-  });
+  return appInstance;
 }
 
-// Start the server
-bootstrap().catch((error) => {
-  logger.error({ err: error }, "❌ Failed to start server");
-  process.exit(1);
-});
+// For Vercel serverless
+export default async function handler(req: any, res: any) {
+  const app = await initializeApp();
+  return app(req, res);
+}
+
+// For local development (only start server if not in serverless environment)
+if (process.env.VERCEL !== "1" && require.main === module) {
+  initializeApp()
+    .then((app) => {
+      app.listen(PORT, () => {
+        logger.info({ port: PORT }, "🚀 API server running");
+        logger.info("📍 Available endpoints:");
+        logger.info("   GET  /availability");
+        logger.info("   POST /reservations");
+        logger.info("   DELETE /reservations/:id");
+        logger.info("   GET  /reservations/day");
+      });
+    })
+    .catch((error) => {
+      logger.error({ err: error }, "❌ Failed to start server");
+      process.exit(1);
+    });
+}
