@@ -110,6 +110,28 @@ async function initializeApp(): Promise<Express> {
 
 // For Vercel serverless
 export default async function handler(req: any, res: any) {
+  // Set CORS headers explicitly for Vercel
+  const origin = req.headers.origin || '';
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'https://restaurant-reservations-front.vercel.app'
+  ];
+  
+  // Allow all vercel.app domains
+  if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Idempotency-Key, Authorization');
+  
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   const app = await initializeApp();
   return app(req, res);
 }
