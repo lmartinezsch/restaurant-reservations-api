@@ -16,10 +16,12 @@ export function createApp(
   const app = express();
 
   // CORS configuration - simple and permissive for Vercel
-  app.use(cors({
-    origin: true,
-    credentials: true
-  }));
+  app.use(
+    cors({
+      origin: true,
+      credentials: true,
+    })
+  );
 
   app.use(requestIdMiddleware);
 
