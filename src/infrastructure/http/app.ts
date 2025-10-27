@@ -15,13 +15,18 @@ export function createApp(
 ): Express {
   const app = express();
 
-  // CORS configuration - simple and permissive for Vercel
+  // CORS configuration - permissive for public API
   app.use(
     cors({
-      origin: true,
-      credentials: true,
+      origin: "*", // Allow all origins for public API
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+      maxAge: 86400, // 24 hours
     })
   );
+
+  // Ensure OPTIONS requests are handled
+  app.options("*", cors());
 
   app.use(requestIdMiddleware);
 
