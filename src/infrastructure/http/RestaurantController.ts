@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import { RestaurantRepository, SectorRepository } from "../../domain/ports/repositories";
+import {
+  RestaurantRepository,
+  SectorRepository,
+} from "../../domain/ports/repositories";
 import { NotFoundError } from "../../domain/errors";
 import { logger } from "../logging/logger";
 
@@ -17,10 +20,7 @@ export class RestaurantController {
     try {
       const requestId = (req as any).id;
 
-      logger.info(
-        { requestId },
-        "Fetching all restaurants"
-      );
+      logger.info({ requestId }, "Fetching all restaurants");
 
       const restaurants = await this.restaurantRepository.findAll();
 
@@ -55,7 +55,9 @@ export class RestaurantController {
         throw new NotFoundError("Restaurant", restaurantId);
       }
 
-      const sectors = await this.sectorRepository.findByRestaurantId(restaurantId);
+      const sectors = await this.sectorRepository.findByRestaurantId(
+        restaurantId
+      );
 
       logger.info(
         { requestId, restaurantId, count: sectors.length },
