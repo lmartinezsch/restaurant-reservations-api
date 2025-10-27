@@ -15,11 +15,10 @@ export function createApp(
 ): Express {
   const app = express();
 
-  // CORS configuration
+  // CORS configuration - simplified for Vercel compatibility
   const allowedOrigins = [
     "http://localhost:3000", // Local development frontend
     "https://restaurant-reservations-front.vercel.app", // Production frontend (when deployed)
-    /vercel\.app$/, // Any Vercel preview deployments
   ];
 
   app.use(
@@ -30,18 +29,11 @@ export function createApp(
 
         // Check if origin is allowed
         const isAllowed = allowedOrigins.some((allowedOrigin) => {
-          if (typeof allowedOrigin === "string") {
-            return origin === allowedOrigin;
-          }
-          // For regex patterns
-          return allowedOrigin.test(origin);
+          return origin === allowedOrigin || origin.endsWith('.vercel.app');
         });
 
-        if (isAllowed) {
-          callback(null, true);
-        } else {
-          callback(new Error("Not allowed by CORS"));
-        }
+        // Always allow in serverless (don't reject, just allow)
+        callback(null, isAllowed || origin.includes('vercel.app'));
       },
       credentials: true,
       methods: ["GET", "POST", "DELETE", "OPTIONS"],
