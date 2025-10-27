@@ -15,18 +15,8 @@ export function createApp(
 ): Express {
   const app = express();
 
-  // CORS configuration - Allow all Vercel domains and localhost
-  app.use(
-    cors({
-      origin: true, // Allow all origins for now (can be restricted later)
-      credentials: true,
-      methods: ["GET", "POST", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Idempotency-Key", "Authorization"],
-      exposedHeaders: ["Content-Type"],
-      preflightContinue: false,
-      optionsSuccessStatus: 204,
-    })
-  );
+  // CORS - Vercel handles headers, but we still need the middleware for local dev
+  app.use(cors());
 
   app.use(requestIdMiddleware);
 
@@ -54,9 +44,6 @@ export function createApp(
   );
 
   app.use(express.json());
-
-  // Explicitly handle OPTIONS requests for CORS preflight
-  app.options("*", cors());
 
   const router = Router();
 
