@@ -15,8 +15,11 @@ export function createApp(
 ): Express {
   const app = express();
 
-  // CORS - Vercel handles headers, but we still need the middleware for local dev
-  app.use(cors());
+  // CORS configuration - simple and permissive for Vercel
+  app.use(cors({
+    origin: true,
+    credentials: true
+  }));
 
   app.use(requestIdMiddleware);
 
