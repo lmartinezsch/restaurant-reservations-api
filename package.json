@@ -1,7 +1,7 @@
 {
   "name": "restaurant-reservation-api",
   "version": "1.0.0",
-  "description": "Restaurant reservation engine with hexagonal architecture",
+  "description": "Restaurant reservation engine with hexagonal architecture.",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
