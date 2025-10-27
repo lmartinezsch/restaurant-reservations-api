@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { createApp } from "./infrastructure/http/app";
 import { AvailabilityController } from "./infrastructure/http/AvailabilityController";
 import { ReservationController } from "./infrastructure/http/ReservationController";
+import { RestaurantController } from "./infrastructure/http/RestaurantController";
 
 import { PrismaRestaurantRepository } from "./infrastructure/repositories/PrismaRestaurantRepository";
 import { PrismaSectorRepository } from "./infrastructure/repositories/PrismaSectorRepository";
@@ -93,7 +94,16 @@ async function initializeApp(): Promise<Express> {
     listReservationsUseCase
   );
 
-  appInstance = createApp(availabilityController, reservationController);
+  const restaurantController = new RestaurantController(
+    restaurantRepo,
+    sectorRepo
+  );
+
+  appInstance = createApp(
+    availabilityController,
+    reservationController,
+    restaurantController
+  );
 
   return appInstance;
 }
@@ -115,6 +125,8 @@ if (process.env.VERCEL !== "1" && require.main === module) {
         logger.info("   POST /reservations");
         logger.info("   DELETE /reservations/:id");
         logger.info("   GET  /reservations/day");
+        logger.info("   GET  /restaurants");
+        logger.info("   GET  /restaurants/:id/sectors");
       });
     })
     .catch((error) => {

@@ -3,6 +3,7 @@ import { Express } from "express";
 import { createApp } from "../../../src/infrastructure/http/app";
 import { AvailabilityController } from "../../../src/infrastructure/http/AvailabilityController";
 import { ReservationController } from "../../../src/infrastructure/http/ReservationController";
+import { RestaurantController } from "../../../src/infrastructure/http/RestaurantController";
 import { InMemoryRestaurantRepository } from "../../../src/infrastructure/repositories/InMemoryRestaurantRepository";
 import { InMemorySectorRepository } from "../../../src/infrastructure/repositories/InMemorySectorRepository";
 import { InMemoryTableRepository } from "../../../src/infrastructure/repositories/InMemoryTableRepository";
@@ -26,7 +27,6 @@ describe("Reservations API Integration Tests", () => {
   let lockRepo: InMemoryLockRepository;
 
   beforeEach(async () => {
-    // Initialize repositories
     restaurantRepo = new InMemoryRestaurantRepository();
     sectorRepo = new InMemorySectorRepository();
     tableRepo = new InMemoryTableRepository();
@@ -34,10 +34,8 @@ describe("Reservations API Integration Tests", () => {
     idempotencyRepo = new InMemoryIdempotencyKeyRepository();
     lockRepo = new InMemoryLockRepository();
 
-    // Seed test data
     await seedData(restaurantRepo, sectorRepo, tableRepo);
 
-    // Initialize use cases
     const checkAvailabilityUseCase = new CheckAvailabilityUseCase(
       restaurantRepo,
       sectorRepo,
@@ -63,7 +61,6 @@ describe("Reservations API Integration Tests", () => {
       restaurantRepo
     );
 
-    // Initialize controllers
     const availabilityController = new AvailabilityController(
       checkAvailabilityUseCase
     );
@@ -72,9 +69,16 @@ describe("Reservations API Integration Tests", () => {
       cancelReservationUseCase,
       listReservationsUseCase
     );
+    const restaurantController = new RestaurantController(
+      restaurantRepo,
+      sectorRepo
+    );
 
-    // Create app
-    app = createApp(availabilityController, reservationController);
+    app = createApp(
+      availabilityController,
+      reservationController,
+      restaurantController
+    );
   });
 
   describe("GET /availability", () => {

@@ -3,13 +3,15 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 import { AvailabilityController } from "./AvailabilityController";
 import { ReservationController } from "./ReservationController";
+import { RestaurantController } from "./RestaurantController";
 import { errorHandler } from "./errorHandler";
 import { requestIdMiddleware } from "./requestIdMiddleware";
 import { logger } from "../logging/logger";
 
 export function createApp(
   availabilityController: AvailabilityController,
-  reservationController: ReservationController
+  reservationController: ReservationController,
+  restaurantController: RestaurantController
 ): Express {
   const app = express();
 
@@ -90,6 +92,14 @@ export function createApp(
 
   router.get("/reservations/day", (req, res, next) =>
     reservationController.listReservations(req, res, next)
+  );
+
+  router.get("/restaurants", (req, res, next) =>
+    restaurantController.getAllRestaurants(req, res, next)
+  );
+
+  router.get("/restaurants/:id/sectors", (req, res, next) =>
+    restaurantController.getRestaurantSectors(req, res, next)
   );
 
   app.use(router);
