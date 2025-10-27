@@ -1,28 +1,27 @@
+import { VercelRequest, VercelResponse } from "@vercel/node";
 import { PrismaClient } from "@prisma/client";
-import { createApp } from "./infrastructure/http/app";
-import { AvailabilityController } from "./infrastructure/http/AvailabilityController";
-import { ReservationController } from "./infrastructure/http/ReservationController";
-import { RestaurantController } from "./infrastructure/http/RestaurantController";
+import { createApp } from "../src/infrastructure/http/app";
+import { AvailabilityController } from "../src/infrastructure/http/AvailabilityController";
+import { ReservationController } from "../src/infrastructure/http/ReservationController";
+import { RestaurantController } from "../src/infrastructure/http/RestaurantController";
 
-import { PrismaRestaurantRepository } from "./infrastructure/repositories/PrismaRestaurantRepository";
-import { PrismaSectorRepository } from "./infrastructure/repositories/PrismaSectorRepository";
-import { PrismaTableRepository } from "./infrastructure/repositories/PrismaTableRepository";
-import { PrismaReservationRepository } from "./infrastructure/repositories/PrismaReservationRepository";
-import { PrismaIdempotencyKeyRepository } from "./infrastructure/repositories/PrismaIdempotencyKeyRepository";
-import { PrismaLockRepository } from "./infrastructure/repositories/PrismaLockRepository";
+import { PrismaRestaurantRepository } from "../src/infrastructure/repositories/PrismaRestaurantRepository";
+import { PrismaSectorRepository } from "../src/infrastructure/repositories/PrismaSectorRepository";
+import { PrismaTableRepository } from "../src/infrastructure/repositories/PrismaTableRepository";
+import { PrismaReservationRepository } from "../src/infrastructure/repositories/PrismaReservationRepository";
+import { PrismaIdempotencyKeyRepository } from "../src/infrastructure/repositories/PrismaIdempotencyKeyRepository";
+import { PrismaLockRepository } from "../src/infrastructure/repositories/PrismaLockRepository";
 
-import { CheckAvailabilityUseCase } from "./application/usecases/CheckAvailabilityUseCase";
-import { CreateReservationUseCase } from "./application/usecases/CreateReservationUseCase";
-import { CancelReservationUseCase } from "./application/usecases/CancelReservationUseCase";
-import { ListReservationsUseCase } from "./application/usecases/ListReservationsUseCase";
+import { CheckAvailabilityUseCase } from "../src/application/usecases/CheckAvailabilityUseCase";
+import { CreateReservationUseCase } from "../src/application/usecases/CreateReservationUseCase";
+import { CancelReservationUseCase } from "../src/application/usecases/CancelReservationUseCase";
+import { ListReservationsUseCase } from "../src/application/usecases/ListReservationsUseCase";
 
-import { seedData } from "./infrastructure/database/seedData";
-import { logger } from "./infrastructure/logging/logger";
+import { seedData } from "../src/infrastructure/database/seedData";
+import { logger } from "../src/infrastructure/logging/logger";
 import { Express } from "express";
 
-const PORT = process.env.PORT || 3000;
-
-// Singleton instances for serverless environments (Vercel)
+// Singleton instances for serverless environments
 let appInstance: Express | null = null;
 let prismaInstance: PrismaClient | null = null;
 
@@ -108,23 +107,8 @@ async function initializeApp(): Promise<Express> {
   return appInstance;
 }
 
-// For local development only
-if (require.main === module) {
-  initializeApp()
-    .then((app) => {
-      app.listen(PORT, () => {
-        logger.info({ port: PORT }, "🚀 API server running");
-        logger.info("📍 Available endpoints:");
-        logger.info("   GET  /availability");
-        logger.info("   POST /reservations");
-        logger.info("   DELETE /reservations/:id");
-        logger.info("   GET  /reservations/day");
-        logger.info("   GET  /restaurants");
-        logger.info("   GET  /restaurants/:id/sectors");
-      });
-    })
-    .catch((error) => {
-      logger.error({ err: error }, "❌ Failed to start server");
-      process.exit(1);
-    });
+// Vercel serverless function handler
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const app = await initializeApp();
+  return app(req as any, res as any);
 }
