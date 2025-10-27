@@ -15,24 +15,42 @@ export function createApp(
 ): Express {
   const app = express();
 
-  // CORS configuration - permissive for public API
-  app.use(
-    cors({
-      origin: "*", // Allow all origins for public API
-      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      allowedHeaders: [
-        "Content-Type",
-        "Authorization",
-        "X-Requested-With",
-        "Accept",
-        "Origin",
-      ],
-      maxAge: 86400, // 24 hours
-    })
-  );
+  // CORS configuration
+  const allowedOrigins = [
+    "https://restaurant-reservations-front.vercel.app",
+    "https://restaurant-reservations-api-git-main-lmartinezschs-projects.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:5173", // Vite default
+  ];
+
+  const corsOptions = {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+    ],
+    maxAge: 86400, // 24 hours
+  };
+
+  app.use(cors(corsOptions));
 
   // Ensure OPTIONS requests are handled
-  app.options("*", cors());
+  app.options("*", cors(corsOptions));
 
   app.use(requestIdMiddleware);
 

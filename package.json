@@ -4,7 +4,6 @@
   "description": "Restaurant reservation engine with hexagonal architecture.",
   "main": "dist/index.js",
   "scripts": {
-    "build:local": "tsc",
     "dev": "ts-node src/index.ts",
     "start": "node dist/index.js",
     "test": "jest",

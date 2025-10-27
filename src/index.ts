@@ -108,6 +108,12 @@ async function initializeApp(): Promise<Express> {
   return appInstance;
 }
 
+// Export for Vercel (serverless)
+export default async function handler(req: any, res: any) {
+  const app = await initializeApp();
+  return app(req, res);
+}
+
 // For local development only
 if (require.main === module) {
   initializeApp()
