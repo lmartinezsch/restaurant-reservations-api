@@ -20,7 +20,13 @@ export function createApp(
     cors({
       origin: "*", // Allow all origins for public API
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+      allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Accept",
+        "Origin",
+      ],
       maxAge: 86400, // 24 hours
     })
   );
