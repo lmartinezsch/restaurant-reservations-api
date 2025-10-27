@@ -15,29 +15,16 @@ export function createApp(
 ): Express {
   const app = express();
 
-  // CORS configuration - simplified for Vercel compatibility
-  const allowedOrigins = [
-    "http://localhost:3000", // Local development frontend
-    "https://restaurant-reservations-front.vercel.app", // Production frontend (when deployed)
-  ];
-
+  // CORS configuration - Allow all Vercel domains and localhost
   app.use(
     cors({
-      origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps, curl, Postman)
-        if (!origin) return callback(null, true);
-
-        // Check if origin is allowed
-        const isAllowed = allowedOrigins.some((allowedOrigin) => {
-          return origin === allowedOrigin || origin.endsWith(".vercel.app");
-        });
-
-        // Always allow in serverless (don't reject, just allow)
-        callback(null, isAllowed || origin.includes("vercel.app"));
-      },
+      origin: true, // Allow all origins for now (can be restricted later)
       credentials: true,
       methods: ["GET", "POST", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Idempotency-Key"],
+      allowedHeaders: ["Content-Type", "Idempotency-Key", "Authorization"],
+      exposedHeaders: ["Content-Type"],
+      preflightContinue: false,
+      optionsSuccessStatus: 204,
     })
   );
 
@@ -67,6 +54,9 @@ export function createApp(
   );
 
   app.use(express.json());
+
+  // Explicitly handle OPTIONS requests for CORS preflight
+  app.options("*", cors());
 
   const router = Router();
 
