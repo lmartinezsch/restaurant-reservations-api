@@ -29,11 +29,11 @@ export function createApp(
 
         // Check if origin is allowed
         const isAllowed = allowedOrigins.some((allowedOrigin) => {
-          return origin === allowedOrigin || origin.endsWith('.vercel.app');
+          return origin === allowedOrigin || origin.endsWith(".vercel.app");
         });
 
         // Always allow in serverless (don't reject, just allow)
-        callback(null, isAllowed || origin.includes('vercel.app'));
+        callback(null, isAllowed || origin.includes("vercel.app"));
       },
       credentials: true,
       methods: ["GET", "POST", "DELETE", "OPTIONS"],
