@@ -1,11 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 import { Table } from "../../domain/entities";
 import { TableRepository } from "../../domain/ports/repositories";
+import { validateDatabaseId } from "../utils/validation";
 
 export class PrismaTableRepository implements TableRepository {
   constructor(private prisma: PrismaClient) {}
 
   async findById(id: string): Promise<Table | null> {
+    validateDatabaseId(id, "table id");
+
     const table = await this.prisma.table.findUnique({
       where: { id },
     });
@@ -18,6 +21,8 @@ export class PrismaTableRepository implements TableRepository {
   }
 
   async findBySectorId(sectorId: string): Promise<Table[]> {
+    validateDatabaseId(sectorId, "sector id");
+
     const tables = await this.prisma.table.findMany({
       where: { sectorId },
     });

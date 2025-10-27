@@ -1,11 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 import { Restaurant } from "../../domain/entities";
 import { RestaurantRepository } from "../../domain/ports/repositories";
+import { validateDatabaseId } from "../utils/validation";
 
 export class PrismaRestaurantRepository implements RestaurantRepository {
   constructor(private prisma: PrismaClient) {}
 
   async findById(id: string): Promise<Restaurant | null> {
+    validateDatabaseId(id, "restaurant id");
+
     const restaurant = await this.prisma.restaurant.findUnique({
       where: { id },
     });

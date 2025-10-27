@@ -1,11 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 import { Sector } from "../../domain/entities";
 import { SectorRepository } from "../../domain/ports/repositories";
+import { validateDatabaseId } from "../utils/validation";
 
 export class PrismaSectorRepository implements SectorRepository {
   constructor(private prisma: PrismaClient) {}
 
   async findById(id: string): Promise<Sector | null> {
+    validateDatabaseId(id, "sector id");
+
     const sector = await this.prisma.sector.findUnique({
       where: { id },
     });
@@ -18,6 +21,8 @@ export class PrismaSectorRepository implements SectorRepository {
   }
 
   async findByRestaurantId(restaurantId: string): Promise<Sector[]> {
+    validateDatabaseId(restaurantId, "restaurant id");
+
     const sectors = await this.prisma.sector.findMany({
       where: { restaurantId },
     });

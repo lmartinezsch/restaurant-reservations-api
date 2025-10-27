@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { LockRepository } from "../../domain/ports/repositories";
+import { sanitizeLockKey } from "../utils/validation";
 
 export class PrismaLockRepository implements LockRepository {
   private readonly LOCK_TIMEOUT_MS = 10000; // 10 seconds
@@ -7,29 +8,33 @@ export class PrismaLockRepository implements LockRepository {
   constructor(private prisma: PrismaClient) {}
 
   async acquireLock(key: string): Promise<boolean> {
+    const sanitizedKey = sanitizeLockKey(key);
+
     const now = new Date();
     const expiresAt = new Date(now.getTime() + this.LOCK_TIMEOUT_MS);
 
     try {
-      const existingLock = await this.prisma.lock.findUnique({
-        where: { lockKey: key },
-      });
+      await this.prisma.$transaction(async (tx) => {
+        const existingLock = await tx.lock.findUnique({
+          where: { lockKey: sanitizedKey },
+        });
 
-      if (existingLock && existingLock.expiresAt > now) {
-        return false;
-      }
+        if (existingLock && existingLock.expiresAt > now) {
+          throw new Error("Lock already acquired");
+        }
 
-      await this.prisma.lock.upsert({
-        where: { lockKey: key },
-        update: {
-          acquiredAt: now,
-          expiresAt,
-        },
-        create: {
-          lockKey: key,
-          acquiredAt: now,
-          expiresAt,
-        },
+        await tx.lock.upsert({
+          where: { lockKey: sanitizedKey },
+          update: {
+            acquiredAt: now,
+            expiresAt,
+          },
+          create: {
+            lockKey: sanitizedKey,
+            acquiredAt: now,
+            expiresAt,
+          },
+        });
       });
 
       return true;
@@ -39,12 +44,12 @@ export class PrismaLockRepository implements LockRepository {
   }
 
   async releaseLock(key: string): Promise<void> {
+    const sanitizedKey = sanitizeLockKey(key);
+
     await this.prisma.lock
       .delete({
-        where: { lockKey: key },
+        where: { lockKey: sanitizedKey },
       })
-      .catch(() => {
-        // Ignore errors if lock doesn't exist
-      });
+      .catch(() => {});
   }
 }

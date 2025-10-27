@@ -1,11 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 import { Reservation, ReservationStatus } from "../../domain/entities";
 import { ReservationRepository } from "../../domain/ports/repositories";
+import { validateDatabaseId } from "../utils/validation";
 
 export class PrismaReservationRepository implements ReservationRepository {
   constructor(private prisma: PrismaClient) {}
 
   async findById(id: string): Promise<Reservation | null> {
+    validateDatabaseId(id, "reservation id");
+
     const reservation = await this.prisma.reservation.findUnique({
       where: { id },
       include: {
@@ -29,6 +32,12 @@ export class PrismaReservationRepository implements ReservationRepository {
     restaurantId: string,
     sectorId?: string
   ): Promise<Reservation[]> {
+    // Validate inputs to prevent SQL injection
+    validateDatabaseId(restaurantId, "restaurant id");
+    if (sectorId) {
+      validateDatabaseId(sectorId, "sector id");
+    }
+
     const reservations = await this.prisma.reservation.findMany({
       where: {
         restaurantId,
@@ -54,6 +63,9 @@ export class PrismaReservationRepository implements ReservationRepository {
     startDateTimeISO: string,
     endDateTimeISO: string
   ): Promise<Reservation[]> {
+    // Validate input to prevent SQL injection
+    validateDatabaseId(sectorId, "sector id");
+
     const reservations = await this.prisma.reservation.findMany({
       where: {
         sectorId,
@@ -152,6 +164,9 @@ export class PrismaReservationRepository implements ReservationRepository {
   }
 
   async delete(id: string): Promise<void> {
+    // Validate input to prevent SQL injection
+    validateDatabaseId(id, "reservation id");
+
     await this.prisma.reservation.delete({
       where: { id },
     });
